@@ -37,8 +37,8 @@ pub async fn ping_api(db: AppState, time: u64) -> bool {
     )
     .bind("/api/system/ping")
     .bind(&request_duration)
-    .bind(result.status().is_success())
     .bind(time as i32)
+    .bind(result.status().is_success())
     .fetch_one(&db.client_db)
     .await
     .unwrap();
