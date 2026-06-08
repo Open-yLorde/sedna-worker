@@ -1,4 +1,38 @@
 services:
+  postgres:
+    image: postgres:18
+    container_name: sedna-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: db_admin
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+    ports:
+      - 5437:5437
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./configs/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./configs/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -h 127.0.0.1 -p 5437 -U $${POSTGRES_USER} -d $${POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - sedna-network
+
   sedna-worker:
     build:
       context: .
@@ -8,6 +42,7 @@ services:
     restart: unless-stopped
     environment:
       API_URL: ${API_URL}
+      LOCAL_DATABASE_URL: postgres://admin:password123@database:5432/db_admin
     ports:
       - 8000:8000
     networks:
@@ -16,3 +51,6 @@ services:
 networks:
   sedna-network:
     driver: bridge
+
+volumes:
+  postgres-data:
