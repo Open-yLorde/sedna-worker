@@ -7,10 +7,7 @@ services:
     container_name: sedna-worker
     restart: unless-stopped
     environment:
-      SECRET_KEY: ${SECRET_KEY}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
-      DATABASE_URL: ${DATABASE_URl}
-      RUST_LOG: true
+      API_URL: ${API_URL}
     ports:
       - 8000:8000
     networks:
