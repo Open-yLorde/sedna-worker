@@ -1,7 +1,5 @@
 FROM rust:1.89 AS builder
 
-RUN apk add --no-cache musl-dev
-
 WORKDIR /app
 
 COPY ./Cargo.toml ./Cargo.toml ./
