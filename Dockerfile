@@ -1,25 +1,27 @@
-FROM rust:1.89 AS builder
+FROM rust:1.94-bookworm AS builder
 
 WORKDIR /app
 
-# Cache das dependências
 COPY Cargo.toml Cargo.lock ./
-
-RUN mkdir src && \
-    echo "fn main() {}" > src/main.rs
+COPY src ./src
 
 RUN cargo build --release
 
-# Copia o código real
-COPY ./src ./src
+FROM debian:bookworm-slim AS runtime
 
-# Build final
-RUN cargo build --release
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 8000
+RUN useradd --create-home --shell /usr/sbin/nologin sedna
 
-ENV RUST_LOG=info
+WORKDIR /app
+COPY --from=builder /app/target/release/sedna-worker /usr/local/bin/sedna-worker
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-COPY --from=builder /app/target/release/sedna-worker ./sedna-worker
+USER sedna
 
-CMD ["./sedna-worker"]
+EXPOSE 8080
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

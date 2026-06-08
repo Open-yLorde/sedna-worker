@@ -1,8 +1,7 @@
-target
-.git
-.github
-.vscode
-.env
-.env.*
+/target/
+/.git/
+/.env
+/.env.*
+!.env.example
 Dockerfile
 docker-compose.yml

@@ -36,16 +36,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: sedna-worker:v1.1
+    image: sedna-worker
     container_name: sedna-worker
     restart: unless-stopped
     environment:
-      API_URL: ${API_URL}
-      LOCAL_DATABASE_URL: ${LOCAL_DATABASE_URL}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      WAIT_FOR_FIRST_PING: ${WAIT_FOR_FIRST_PING}
+      API_URL: ${API_URL:-http://localhost:8080/api}
+      LOCAL_DATABASE_URL: ${LOCAL_DATABASE_URL:-postgres://admin:password123@localhost:5437/db_admin}
+      POSTGRES_DB: ${POSTGRES_DB:-db_admin}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+      WAIT_FOR_FIRST_PING: ${WAIT_FOR_FIRST_PING:-no}
     ports:
       - 8000:8000
     networks:

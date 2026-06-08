@@ -12,13 +12,13 @@ help:
 	@echo "  logs-db"
 
 build:
-	$(COMPOSE) build --no-cache sedna-worker
+	$(COMPOSE) build sedna-worker
 
 up:
-	$(COMPOSE) up sedna-worker
+	$(COMPOSE) up --build sedna-worker
 
 up-detached:
-	$(COMPOSE) up sedna-worker -d
+	$(COMPOSE) up -d --build sedna-worker
 
 logs:
 	$(COMPOSE) logs sedna-worker -f

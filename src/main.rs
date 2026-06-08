@@ -1,4 +1,3 @@
-use rand::{RngExt, rng};
 use std::time::Duration;
 
 mod database;
@@ -28,19 +27,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let pool = database::postgres_connection::local_connect().await;
 
-    let random_time: u64 = rng().random_range(10..=25);
-
     if std::env::var("WAIT_FOR_FIRST_PING").unwrap_or("no".to_string()) == "yes"
         || std::env::var("WAIT_FOR_FIRST_PING").unwrap_or("no".to_string()) == "true"
     {
         println!("Waiting for ping...");
-        tokio::time::sleep(Duration::from_secs(random_time * 60)).await;
+        tokio::time::sleep(Duration::from_secs(20 * 60)).await;
         unsafe { std::env::remove_var("WAIT_FOR_FIRST_PING") };
     }
 
-    let mut tick = tokio::time::interval(Duration::from_secs(random_time * 60));
+    let mut tick = tokio::time::interval(Duration::from_secs(20 * 60));
     loop {
         tick.tick().await;
-        ping_api(AppState::new(pool.clone()), random_time).await;
+        ping_api(AppState::new(pool.clone()), 20).await;
     }
 }
