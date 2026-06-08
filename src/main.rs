@@ -30,8 +30,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let random_time: u64 = rng().random_range(10..=25);
 
-    if std::env::var("WAIT_FOR_FIRST_PING").unwrap() == "yes"
-        || std::env::var("WAIT_FOR_FIRST_PING").unwrap() == "true"
+    if std::env::var("WAIT_FOR_FIRST_PING").unwrap_or("no".to_string()) == "yes"
+        || std::env::var("WAIT_FOR_FIRST_PING").unwrap_or("no".to_string()) == "true"
     {
         println!("Waiting for ping...");
         tokio::time::sleep(Duration::from_secs(random_time * 60)).await;
@@ -41,6 +41,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut tick = tokio::time::interval(Duration::from_secs(random_time * 60));
     loop {
         tick.tick().await;
-        ping_api(AppState::new(pool.clone())).await;
+        ping_api(AppState::new(pool.clone()), random_time).await;
     }
 }
