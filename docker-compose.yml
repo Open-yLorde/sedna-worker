@@ -1,0 +1,21 @@
+services:
+  sedna-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sedna-worker:v1
+    container_name: sedna-worker
+    restart: unless-stopped
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      DATABASE_URL: ${DATABASE_URl}
+      RUST_LOG: true
+    ports:
+      - 8000:8000
+    networks:
+      - sedna-network
+
+networks:
+  sedna-network:
+    driver: bridge
