@@ -1,23 +1,8 @@
 use std::time::Instant;
 
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use sqlx::prelude::FromRow;
+use crate::{AppState, models::ping::PingModel};
 
-use crate::AppState;
-
-#[derive(Debug, FromRow, Serialize, Deserialize)]
-struct PingModel {
-    id: i32,
-    endpoint: String,
-    delay: i32,
-    timeout: i32,
-    success: bool,
-    status_code: i32,
-    created_at: Option<DateTime<Utc>>,
-}
-
-pub async fn ping_api(db: AppState, time: u64) -> bool {
+pub async fn ping_api(db: AppState, time: u64) {
     println!("Pinging API...");
     let api_url = std::env::var("API_URL").unwrap_or("http://localhost:8080/api".to_string());
     let request_start = Instant::now();
@@ -44,6 +29,4 @@ pub async fn ping_api(db: AppState, time: u64) -> bool {
     .fetch_one(&db.client_db)
     .await
     .unwrap();
-
-    result.status().is_success()
 }

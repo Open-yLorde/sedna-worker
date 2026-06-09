@@ -46,6 +46,7 @@ services:
     environment:
       API_URL: ${API_URL:-http://localhost:8080/api}
       TIME_TO_PING: ${TIME_TO_PING:-15}
+      TIME_TO_CALC_LATENCY: ${TIME_TO_CALC_LATENCY:-10}
       POSTGRES_DB: ${POSTGRES_DB:-db_admin}
       POSTGRES_USER: ${POSTGRES_USER:-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}

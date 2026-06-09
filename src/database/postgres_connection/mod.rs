@@ -18,8 +18,11 @@ pub async fn local_connect() -> Pool<Postgres> {
         .await;
 
     match check_migrate {
-        Ok(_) => println!("Migrated successfully"),
-        Err(e) => println!("Error applying migrations: {:?}", e),
+        Ok(_) => println!("Migrated successfully\n"),
+        Err(e) => {
+            println!("Error applying migrations: {:?} \n", e);
+            std::process::exit(1);
+        }
     }
 
     pool
