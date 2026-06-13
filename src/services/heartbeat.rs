@@ -16,45 +16,55 @@ pub async fn heartbeat(db: AppState, time: u64) {
     let mut easy = Easy::new();
     easy.url("https://google.com").unwrap();
     easy.perform().unwrap();
-    let data = easy.write_function(|data| {
+
+    match easy.write_function(|data| {
         stdout().write_all(data).unwrap();
         Ok(data.len())
-    });
+    }) {
+        Ok(_) => {
+            let result = reqwest::get(format!("{}/system/ping", api_url))
+                .await
+                .unwrap();
 
-    if data.is_ok() {
-        let result = reqwest::get(format!("{}/system/ping", api_url))
+            let request_duration: i32 = request_start.elapsed().as_millis() as i32;
+
+            println!("Status: {}", result.status());
+            println!("Duration: {}ms", request_duration);
+
+            sqlx::query_as::<_, HeartbeatModel>(
+                r#"
+                INSERT INTO heartbeat (endpoint, delay, timeout, success, status_code)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING *
+            "#,
+            )
+            .bind("/api/system/ping")
+            .bind(&request_duration)
+            .bind(time as i32)
+            .bind(result.status().is_success())
+            .bind(result.status().as_u16() as i32)
+            .fetch_one(&db.client_db)
             .await
             .unwrap();
-
-        let request_duration: i32 = request_start.elapsed().as_millis() as i32;
-
-        println!("Status: {}", result.status());
-        println!("Duration: {}ms", request_duration);
-
-        sqlx::query_as::<_, HeartbeatModel>(
-            "INSERT INTO heartbeat (endpoint, delay, timeout, success, status_code) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        )
-        .bind("/api/system/ping")
-        .bind(&request_duration)
-        .bind(time as i32)
-        .bind(result.status().is_success())
-        .bind(result.status().as_u16() as i32)
-        .fetch_one(&db.client_db)
-        .await
-        .unwrap();
-    } else {
-        println!("No connection found, saving wildcard data...");
-        sqlx::query_as::<_, HeartbeatModel>(
-            "INSERT INTO heartbeat (endpoint, delay, timeout, success, status_code) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-        )
-        .bind("/api/system/ping")
-        .bind(1000)
-        .bind(time as i32)
-        .bind(true)
-        .bind(200)
-        .fetch_one(&db.client_db)
-        .await
-        .unwrap();
+        }
+        Err(_) => {
+            println!("No connection found, saving wildcard data...");
+            sqlx::query_as::<_, HeartbeatModel>(
+                r#"
+                INSERT INTO heartbeat (endpoint, delay, timeout, success, status_code)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING *
+            "#,
+            )
+            .bind("/api/system/ping")
+            .bind(1000)
+            .bind(time as i32)
+            .bind(true)
+            .bind(200)
+            .fetch_one(&db.client_db)
+            .await
+            .unwrap();
+        }
     }
 
     println!("");
