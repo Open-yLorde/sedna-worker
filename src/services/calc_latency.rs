@@ -6,7 +6,7 @@ use crate::{
 pub async fn calc_latency(db: AppState) {
     println!("CALC LATENCY:");
 
-    let size_of_heartbeat_to_calc_latency: i32 =
+    let size_of_heartbeats_to_calc_latency: i32 =
         std::env::var("SIZE_OF_HEARTBEATS_TO_CALC_LATENCY")
             .unwrap_or("25".to_string())
             .to_string()
@@ -16,7 +16,7 @@ pub async fn calc_latency(db: AppState) {
     let ping_result = match sqlx::query_as::<_, HeartbeatModel>(
         "SELECT * FROM heartbeat ORDER BY id DESC LIMIT $1",
     )
-    .bind(&size_of_heartbeat_to_calc_latency)
+    .bind(&size_of_heartbeats_to_calc_latency)
     .fetch_all(&db.client_db)
     .await
     {
