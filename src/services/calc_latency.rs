@@ -8,9 +8,8 @@ pub async fn calc_latency(db: AppState) {
 
     let size_of_heartbeats_to_calc_latency: i32 =
         std::env::var("SIZE_OF_HEARTBEATS_TO_CALC_LATENCY")
-            .unwrap_or("25".to_string())
-            .to_string()
-            .parse()
+            .expect("SIZE_OF_HEARTBEATS_TO_CALC_LATENCY must be set")
+            .parse::<i32>()
             .unwrap();
 
     let ping_result = match sqlx::query_as::<_, HeartbeatModel>(

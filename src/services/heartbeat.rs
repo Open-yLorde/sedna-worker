@@ -9,7 +9,7 @@ use curl::easy::Easy;
 pub async fn heartbeat(db: AppState, time: u64) {
     println!("-- == -- [START] -- == --");
     println!("HEARTBEAT:");
-    let api_url = std::env::var("API_URL").unwrap_or("http://localhost:8080/api".to_string());
+    let api_url = std::env::var("API_URL").expect("API_URL must be set");
     let request_start = Instant::now();
 
     // HTTP request to google to check connection

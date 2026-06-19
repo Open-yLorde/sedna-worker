@@ -2,9 +2,11 @@ use std::time::Duration;
 
 mod database;
 mod models;
+mod routines;
 mod services;
 
 use sqlx::{Pool, Postgres};
+use std::env::var;
 use tokio::time::interval;
 
 #[derive(Clone)]
@@ -28,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
     let pool = database::postgres_connection::local_connect().await;
 
     // Get env vars
-    let delay_time = std::env::var("DELAY_TIME")
+    let delay_time: u64 = var("DELAY_TIME")
         .expect("DELAY_TIME mut be set")
         .parse::<u64>()
         .unwrap();
@@ -41,11 +43,17 @@ async fn main() -> anyhow::Result<()> {
         let mut tick = interval(Duration::from_secs(delay_time * 60));
         loop {
             tick.tick().await;
-            services::heartbeat::heartbeat(AppState::new(ping_pool.clone()), delay_time).await;
+            services::heartbeat::heartbeat(
+                AppState {
+                    client_db: ping_pool.clone(),
+                },
+                delay_time,
+            )
+            .await;
         }
     });
 
-    // Wait for 30 seconds
+    // Wait for 15 seconds
     tokio::time::sleep(Duration::from_secs(15)).await;
 
     // Start calc latency
@@ -54,11 +62,14 @@ async fn main() -> anyhow::Result<()> {
         let mut tick = interval(Duration::from_secs(delay_time * 60));
         loop {
             tick.tick().await;
-            services::calc_latency::calc_latency(AppState::new(c_latency_pool.clone())).await;
+            services::calc_latency::calc_latency(AppState {
+                client_db: c_latency_pool.clone(),
+            })
+            .await;
         }
     });
 
-    // Wait for 30 seconds
+    // Wait for 15 seconds
     tokio::time::sleep(Duration::from_secs(15)).await;
 
     // Start make status
@@ -67,7 +78,43 @@ async fn main() -> anyhow::Result<()> {
         let mut tick = interval(Duration::from_secs(delay_time * 60));
         loop {
             tick.tick().await;
-            services::make_status::make_status(AppState::new(c_status_pool.clone())).await;
+            services::make_status::make_status(AppState {
+                client_db: c_status_pool.clone(),
+            })
+            .await;
+        }
+    });
+
+    // Start clear old data
+    let time_to_clear_old_data: u64 = var("TIME_TO_CLEAR_OLD_DATA")
+        .expect("TIME_TO_CLEAR_OLD_DATA must be set")
+        .parse::<u64>()
+        .unwrap();
+
+    // Variable
+    let clear_old_data_on_start: bool = var("CLEAR_OLD_DATA_ON_START")
+        .expect("CLEAR_OLD_DATA_ON_START must be set")
+        .parse::<bool>()
+        .unwrap();
+
+    // Check if clear old data on start is true and wait
+    if !clear_old_data_on_start {
+        tokio::time::sleep(Duration::from_secs(time_to_clear_old_data * 3600)).await;
+    };
+
+    // Wait for 15 seconds
+    tokio::time::sleep(Duration::from_secs(15)).await;
+
+    // Start clear old data
+    let c_old_data_pool = pool.clone();
+    tokio::spawn(async move {
+        let mut tick = interval(Duration::from_secs(time_to_clear_old_data * 3600));
+        loop {
+            tick.tick().await;
+            routines::clear_old_data::clear_old_data(AppState {
+                client_db: c_old_data_pool.clone(),
+            })
+            .await;
         }
     });
 

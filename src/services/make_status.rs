@@ -9,19 +9,19 @@ pub async fn make_status(db: AppState) {
     let total_pings: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat")
         .fetch_one(&db.client_db)
         .await
-        .unwrap_or(0);
+        .unwrap_or(1);
 
     let total_pings_success: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat WHERE success = true")
             .fetch_one(&db.client_db)
             .await
-            .unwrap_or(0);
+            .unwrap_or(1);
 
     let total_pings_fail: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat WHERE success = false")
             .fetch_one(&db.client_db)
             .await
-            .unwrap_or(0);
+            .unwrap_or(1);
 
     let total_pings_success_percent: f64 =
         (total_pings_success as f64) / (total_pings - total_pings_fail) as f64;

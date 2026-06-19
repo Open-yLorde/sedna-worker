@@ -4,7 +4,10 @@ use sqlx::{Pool, Postgres};
 
 pub async fn local_connect() -> Pool<Postgres> {
     let database_url = std::env::var("LOCAL_DATABASE_URL").expect("LOCAL_DATABASE_URL must be set");
-    let migrate_on_run = std::env::var("MIGRATE_ON_RUN").unwrap_or("false".to_string());
+    let migrate_on_run: bool = std::env::var("MIGRATE_ON_RUN")
+        .expect("MIGRATE_ON_RUN must be set")
+        .parse::<bool>()
+        .unwrap();
 
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(20)
@@ -14,7 +17,7 @@ pub async fn local_connect() -> Pool<Postgres> {
         .await
         .unwrap();
 
-    if migrate_on_run == "true" {
+    if migrate_on_run {
         let check_migrate = sqlx::migrate!("./src/database/postgres_connection/local_migrations")
             .run(&pool)
             .await;
