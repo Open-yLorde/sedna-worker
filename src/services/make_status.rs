@@ -1,22 +1,19 @@
-use dotenv::var;
-
 use crate::{
     AppState,
     models::{latency::LatencyModel, status::StatusModel},
 };
 
 pub async fn make_status(db: AppState) {
-    let save_data_on_database: bool = var("SAVE_DATA_ON_DATABASE")
+    let save_data_on_database: bool = std::env::var("SAVE_DATA_ON_DATABASE")
         .expect("SAVE_DATA_ON_DATABASE must be set")
         .parse::<bool>()
-        .unwrap();
+        .unwrap_or(true);
 
     if !save_data_on_database {
-        println!("-- == -- [END] -- == --\n");
         return;
     }
 
-    println!("STATUS:");
+    println!("\nSTATUS:");
 
     let total_pings: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM heartbeat")
         .fetch_one(&db.client_db)
@@ -54,8 +51,6 @@ pub async fn make_status(db: AppState) {
     println!("");
     println!("Uptime: {}%", uptime);
     println!("AVG latency: {}ms", latency_ms);
-
-    println!("-- == -- [END] -- == --\n");
 
     sqlx::query_as::<_, StatusModel>(
         "INSERT INTO status (uptime, latency) VALUES ($1, $2) RETURNING *",

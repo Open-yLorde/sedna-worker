@@ -3,19 +3,23 @@ use std::{
     time::Instant,
 };
 
-use crate::{AppState, models::heartbeat::HeartbeatModel};
+use crate::{AppState, executors, models::heartbeat::HeartbeatModel};
 use curl::easy::Easy;
-use dotenv::var;
 
 pub async fn heartbeat(db: AppState, time: u64) {
-    println!("-- == -- [START] -- == --");
     let api_url = std::env::var("API_URL").expect("API_URL must be set");
-    let save_data_on_database: bool = var("SAVE_DATA_ON_DATABASE")
+    let use_discord_webhooks: bool = std::env::var("USE_DISCORD_WEBHOOKS")
+        .expect("USE_DISCORD_WEBHOOKS must be set")
+        .parse::<bool>()
+        .unwrap_or(true);
+    let discord_webhook_url = std::env::var("DISCORD_WEBHOOK_URL")
+        .expect("DISCORD_WEBHOOK_URL must be set, if disable type none");
+    let save_data_on_database: bool = std::env::var("SAVE_DATA_ON_DATABASE")
         .expect("SAVE_DATA_ON_DATABASE must be set")
         .parse::<bool>()
-        .unwrap();
+        .unwrap_or(true);
 
-    println!("HEARTBEAT:");
+    println!("\nHEARTBEAT:");
     let request_start = Instant::now();
 
     // HTTP request to google to check connection
@@ -36,6 +40,21 @@ pub async fn heartbeat(db: AppState, time: u64) {
 
             println!("Status: {}", result.status());
             println!("Duration: {}ms", request_duration);
+
+            if use_discord_webhooks {
+                match executors::send_discord_webhook::send_discord_webhook(
+                    &discord_webhook_url,
+                    "Heartbeat",
+                    &format!("Heartbeat Duration: {}ms", request_duration),
+                )
+                .await
+                {
+                    Ok(_) => (),
+                    Err(err) => {
+                        println!("Error sending discord webhook: {}", err);
+                    }
+                }
+            }
 
             if !save_data_on_database {
                 return;

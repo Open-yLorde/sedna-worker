@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-dotenv = "0.15.0"
+dotenvy = "0.15"
 env_logger = "0.11.8"
 reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"] }
 tokio = { version = "1.52.1", features = ["full"] }
@@ -14,3 +14,4 @@ serde = { version = "1.0.228", features = ["derive"] }
 chrono = { version = "0.4.42", features = ["serde"] }
 anyhow = "1.0.102"
 curl = "0.4.50"
+discord_hook = "0.1.8"

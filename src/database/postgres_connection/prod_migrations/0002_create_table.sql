@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS queue_commands (
+    id SERIAL NOT NULL PRIMARY KEY,
+    command VARCHAR(24) NOT NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'pending'
+);
